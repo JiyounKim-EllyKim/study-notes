@@ -49,7 +49,54 @@ FROM users;
 
 ---
 
-## 4. 컬럼 별칭 Alias
+## 4. DISTINCT
+
+`DISTINCT`는 조회 결과에서 중복되는 행을 제거할 때 사용한다.
+
+기본 형태는 다음과 같다.
+
+```sql
+SELECT DISTINCT 컬럼명
+FROM 테이블명;
+```
+
+예를 들어 `users` 테이블에서 중복 없이 도시 목록을 조회하려면 다음과 같이 작성한다.
+
+```sql
+SELECT DISTINCT city
+FROM users;
+```
+
+여러 컬럼을 함께 조회할 수도 있다.
+
+```sql
+SELECT DISTINCT species, island
+FROM penguins;
+```
+
+이 경우 각 컬럼의 중복을 따로 제거하는 것이 아니라,
+`species`와 `island`의 **조합 전체가 동일한 행**을 중복으로 판단한다.
+
+예를 들어 다음과 같은 데이터가 있다고 가정한다.
+
+| species | island |
+| --- | --- |
+| Adelie | Biscoe |
+| Adelie | Biscoe |
+| Gentoo | Biscoe |
+
+`DISTINCT`를 적용하면 다음과 같이 조회된다.
+
+| species | island |
+| --- | --- |
+| Adelie | Biscoe |
+| Gentoo | Biscoe |
+
+즉, 동일한 `(species, island)` 조합은 한 번만 출력된다.
+
+---
+
+## 5. 컬럼 별칭 Alias
 
 컬럼명에 별칭을 붙일 때는 `AS`를 사용한다.
 
@@ -73,7 +120,7 @@ FROM users;
 
 ---
 
-## 5. WHERE 문
+## 6. WHERE 문
 
 `WHERE` 문은 특정 조건을 만족하는 행만 조회할 때 사용한다.
 
@@ -93,19 +140,19 @@ WHERE age >= 20;
 
 ---
 
-## 6. 비교 연산자
+## 7. 비교 연산자
 
 `WHERE` 문에서는 비교 연산자를 사용하여 조건을 지정할 수 있다.
 
-| 연산자 | 의미     |
-| --- | ------ |
-| =   | 같다     |
-| !=  | 같지 않다  |
-| <>  | 같지 않다  |
-| >   | 크다     |
-| >=  | 크거나 같다 |
-| <   | 작다     |
-| <=  | 작거나 같다 |
+| 연산자 | 의미 |
+| --- | --- |
+| = | 같다 |
+| != | 같지 않다 |
+| <> | 같지 않다 |
+| > | 크다 |
+| >= | 크거나 같다 |
+| < | 작다 |
+| <= | 작거나 같다 |
 
 예시:
 
@@ -129,7 +176,7 @@ WHERE age >= 20;
 
 ---
 
-## 7. 문자열 조건
+## 8. 문자열 조건
 
 문자열 값을 조건으로 사용할 때는 작은따옴표를 사용한다.
 
@@ -149,7 +196,7 @@ WHERE city = 'Seoul';
 
 ---
 
-## 8. AND / OR 조건
+## 9. AND / OR 조건
 
 여러 조건을 함께 사용할 때는 `AND`, `OR`를 사용한다.
 
@@ -181,7 +228,7 @@ WHERE city = 'Seoul'
 
 ---
 
-## 9. BETWEEN
+## 10. BETWEEN
 
 `BETWEEN`은 특정 범위 안에 있는 값을 조회할 때 사용한다.
 
@@ -197,7 +244,7 @@ WHERE age BETWEEN 20 AND 29;
 
 ---
 
-## 10. IN
+## 11. IN
 
 `IN`은 여러 값 중 하나에 해당하는 데이터를 조회할 때 사용한다.
 
@@ -213,14 +260,14 @@ WHERE city IN ('Seoul', 'Busan', 'Daegu');
 
 ---
 
-## 11. LIKE
+## 12. LIKE
 
 `LIKE`는 문자열에서 특정 패턴을 검색할 때 사용한다.
 
-| 기호 | 의미         |
-| -- | ---------- |
-| %  | 0개 이상의 문자  |
-| _  | 정확히 1개의 문자 |
+| 기호 | 의미 |
+| --- | --- |
+| % | 0개 이상의 문자 |
+| _ | 정확히 1개의 문자 |
 
 예시:
 
@@ -243,6 +290,14 @@ WHERE email LIKE '%gmail.com';
 ```sql
 SELECT *
 FROM users
+WHERE name LIKE '%Kim%';
+```
+
+이 쿼리는 이름의 어느 위치에든 `Kim`이 포함된 사용자를 조회한다.
+
+```sql
+SELECT *
+FROM users
 WHERE name LIKE '_im';
 ```
 
@@ -250,7 +305,7 @@ WHERE name LIKE '_im';
 
 ---
 
-## 12. NULL 값 조회
+## 13. NULL 값 조회
 
 `NULL`은 값이 없음을 의미한다.
 
@@ -274,7 +329,7 @@ WHERE phone IS NOT NULL;
 
 ---
 
-## 13. SELECT / WHERE 실행 순서
+## 14. SELECT / WHERE 실행 순서
 
 SQL 작성 순서와 실제 실행 순서는 다르다.
 
@@ -296,10 +351,12 @@ WHERE 조건;
 
 ---
 
-## 14. 정리
+## 15. 정리
 
 * `SELECT`는 조회할 컬럼을 지정한다.
 * `FROM`은 데이터를 가져올 테이블을 지정한다.
+* `DISTINCT`는 조회 결과의 중복 행을 제거한다.
+* 여러 컬럼에 `DISTINCT`를 사용하면 컬럼 조합 전체를 기준으로 중복을 제거한다.
 * `WHERE`는 조건에 맞는 행만 필터링한다.
 * 문자열 조건은 작은따옴표로 감싼다.
 * 여러 조건은 `AND`, `OR`로 연결할 수 있다.
