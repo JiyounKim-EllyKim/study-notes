@@ -288,7 +288,44 @@ WHERE rn = 1;
 
 ---
 
-### 15.2. 월별 매출 누적 합계
+### 15.2. 그룹별 공동 1위 찾기
+
+`DENSE_RANK()`를 사용하면 그룹마다 가장 큰 값을 가진 행을 찾을 수 있다.
+
+아래 예시는 개발사와 플랫폼별 판매량을 미리 집계한 `sales_by_platform` 결과를 사용한다고 가정한다.
+
+```sql
+WITH ranked_sales AS (
+    SELECT developer_id,
+           platform_id,
+           sales,
+           DENSE_RANK() OVER (
+               PARTITION BY developer_id
+               ORDER BY sales DESC
+           ) AS rk
+    FROM sales_by_platform
+)
+SELECT developer_id,
+       platform_id,
+       sales
+FROM ranked_sales
+WHERE rk = 1;
+```
+
+`PARTITION BY developer_id`로 개발사별 그룹을 나누고,
+`sales DESC` 기준으로 판매량이 높은 순서대로 순위를 부여한다.
+
+`DENSE_RANK()`는 같은 값에 같은 순위를 부여하므로,
+최대 판매량이 같은 플랫폼이 여러 개라면 모두 `1위`가 된다.
+
+따라서 `WHERE rk = 1`을 사용하면 그룹별 공동 1위를 모두 조회할 수 있다.
+
+`ROW_NUMBER()`를 사용하면 동점이어도 서로 다른 번호가 부여되므로,
+공동 1위를 모두 조회해야 하는 경우에는 `DENSE_RANK()`가 더 적합하다.
+
+---
+
+### 15.3. 월별 매출 누적 합계
 
 ```sql
 SELECT sales_month,
@@ -308,6 +345,7 @@ FROM monthly_sales;
 * 윈도우 함수는 원본 행을 유지하면서 순위, 집계, 이전/다음 값을 계산한다.
 * `OVER` 절을 사용하여 윈도우 함수의 계산 범위를 지정한다.
 * `PARTITION BY`는 그룹을 나누는 기준이다.
+* `DENSE_RANK()`와 `PARTITION BY`를 활용하면 그룹별 공동 순위를 구할 수 있다.
 * `ORDER BY`는 그룹 안에서 순서를 정하는 기준이다.
 * `ROW_NUMBER`, `RANK`, `DENSE_RANK`는 순위 계산에 사용한다.
 * `SUM() OVER`, `AVG() OVER` 등은 행을 유지한 채 집계값을 추가할 때 사용한다.
