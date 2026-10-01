@@ -159,19 +159,36 @@ WHERE NOT EXISTS (
 
 `FROM` 절의 서브쿼리는 서브쿼리 결과를 하나의 임시 테이블처럼 사용할 때 사용한다.
 
+이처럼 `FROM` 절에서 테이블처럼 사용되는 서브쿼리를 **derived table**이라고 한다.
+
 ```sql
-SELECT user_id, total_amount
+SELECT user_id,
+       total_amount
 FROM (
-    SELECT user_id, SUM(amount) AS total_amount
+    SELECT user_id,
+           SUM(amount) AS total_amount
     FROM orders
     GROUP BY user_id
 ) AS order_summary
 WHERE total_amount >= 100000;
 ```
 
-위 쿼리는 먼저 사용자별 총 주문 금액을 계산한 뒤, 총 주문 금액이 100000 이상인 사용자만 조회한다.
+위 쿼리는 먼저 사용자별 총 주문 금액을 계산한 뒤,
+그 결과를 `order_summary`라는 임시 테이블처럼 사용한다.
 
-`FROM` 절 서브쿼리에는 반드시 별칭을 붙이는 것이 좋다.
+MySQL에서는 derived table에 반드시 별칭(alias)을 지정해야 한다.
+
+```sql
+FROM (
+    SELECT ...
+) AS 별칭
+```
+
+별칭을 생략하면 다음과 같은 오류가 발생할 수 있다.
+
+```text
+Every derived table must have its own alias
+```
 
 ---
 
@@ -242,3 +259,4 @@ WHERE amount > (
 * 다중 행 서브쿼리는 여러 값을 반환하며 `IN`, `EXISTS` 등을 함께 사용한다.
 * `NOT IN`은 `NULL`에 주의해야 한다.
 * 상관 서브쿼리는 바깥 쿼리의 컬럼을 서브쿼리에서 참조한다.
+* MySQL에서 `FROM` 절의 서브쿼리(derived table)는 반드시 별칭을 지정해야 한다.
