@@ -525,3 +525,4 @@ LLM 애플리케이션에서 Hallucination을 줄이기 위한 체크리스트�
 - Faithfulness는 답변이 제공된 근거에 충실한지를 의미한다.
 - Factuality는 답변이 실제 사실과 일치하는지를 의미한다.
 - 중요한 LLM 서비스에서는 평가, 모니터링, Human-in-the-loop 구조가 필요하다.
+
