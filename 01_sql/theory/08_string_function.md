@@ -84,9 +84,64 @@ WHERE RIGHT(title, 1) NOT IN ('A', 'E', 'I', 'O', 'U');
 
 ---
 
-## 5. 정리
+## 5. SUBSTRING_INDEX
+
+`SUBSTRING_INDEX()`는 특정 구분자를 기준으로 문자열의 일부를 추출할 때 사용한다.
+
+```sql
+SUBSTRING_INDEX(문자열, 구분자, count)
+```
+
+`count`가 양수이면 문자열의 왼쪽부터 구분자를 세고,
+음수이면 오른쪽부터 구분자를 센다.
+
+```sql
+SELECT SUBSTRING_INDEX('경기도 성남시 분당구', ' ', 1);
+```
+
+결과:
+
+```text
+경기도
+```
+
+```sql
+SELECT SUBSTRING_INDEX('경기도 성남시 분당구', ' ', -1);
+```
+
+결과:
+
+```text
+분당구
+```
+
+함수를 중첩하면 중간에 있는 값도 추출할 수 있다.
+
+```sql
+SELECT SUBSTRING_INDEX(
+    SUBSTRING_INDEX('경기도 성남시 분당구', ' ', 2),
+    ' ',
+    -1
+);
+```
+
+결과:
+
+```text
+성남시
+```
+
+즉,
+
+1. 안쪽 `SUBSTRING_INDEX()`로 `경기도 성남시`를 가져오고
+2. 바깥 `SUBSTRING_INDEX()`로 마지막 값인 `성남시`를 가져온다.
+
+---
+
+## 6. 정리
 
 - `LOWER()`는 문자열을 소문자로 변환한다.
 - `UPPER()`는 문자열을 대문자로 변환한다.
 - `LEFT(str, n)`은 문자열의 왼쪽에서 `n`개의 문자를 가져온다.
 - `RIGHT(str, n)`은 문자열의 오른쪽에서 `n`개의 문자를 가져온다.
+- `SUBSTRING_INDEX(str, delimiter, count)`는 구분자를 기준으로 문자열의 일부를 추출한다.
