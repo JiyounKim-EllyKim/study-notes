@@ -325,7 +325,41 @@ WHERE rk = 1;
 
 ---
 
-### 15.3. 월별 매출 누적 합계
+### 15.3. 그룹별 중앙값 구하기
+
+MySQL에서 중앙값을 직접 구하는 내장 함수가 없는 경우 `ROW_NUMBER()`와 `COUNT()`를 이용해 중앙값을 계산할 수 있다.
+
+```sql
+SELECT group_name,
+       AVG(value) AS median
+FROM (
+    SELECT group_name,
+           value,
+           ROW_NUMBER() OVER (
+               PARTITION BY group_name
+               ORDER BY value
+           ) AS rn,
+           COUNT(*) OVER (
+               PARTITION BY group_name
+           ) AS total_cnt
+    FROM data
+) AS t
+WHERE rn BETWEEN total_cnt / 2
+             AND (total_cnt / 2) + 1
+GROUP BY group_name;
+```
+
+`ROW_NUMBER()`로 그룹별 값을 정렬하고,
+`COUNT()`로 그룹별 전체 개수를 구한다.
+
+전체 개수가 홀수이면 가운데 행 하나가 선택되고,
+짝수이면 가운데 두 행이 선택된다.
+
+마지막으로 선택된 값에 `AVG()`를 적용하면 중앙값을 구할 수 있다.
+
+---
+
+### 15.4. 월별 매출 누적 합계
 
 ```sql
 SELECT sales_month,
@@ -346,6 +380,7 @@ FROM monthly_sales;
 * `OVER` 절을 사용하여 윈도우 함수의 계산 범위를 지정한다.
 * `PARTITION BY`는 그룹을 나누는 기준이다.
 * `DENSE_RANK()`와 `PARTITION BY`를 활용하면 그룹별 공동 순위를 구할 수 있다.
+* `ROW_NUMBER()`와 `COUNT() OVER()`를 활용하면 그룹별 중앙값을 구할 수 있다.
 * `ORDER BY`는 그룹 안에서 순서를 정하는 기준이다.
 * `ROW_NUMBER`, `RANK`, `DENSE_RANK`는 순위 계산에 사용한다.
 * `SUM() OVER`, `AVG() OVER` 등은 행을 유지한 채 집계값을 추가할 때 사용한다.
