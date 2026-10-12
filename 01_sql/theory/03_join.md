@@ -86,6 +86,49 @@ ON users.user_id = orders.user_id;
 
 ---
 
+### 4.1. LEFT JOIN과 COUNT
+
+`LEFT JOIN` 후 개수를 셀 때는 `COUNT(*)`와 `COUNT(컬럼)`의 차이에 주의해야 한다.
+
+예를 들어 모든 사용자의 주문 수를 구한다고 하자.
+
+```sql
+SELECT u.user_id,
+       COUNT(o.order_id) AS order_count
+FROM users AS u
+LEFT JOIN orders AS o
+ON u.user_id = o.user_id
+GROUP BY u.user_id;
+```
+
+`LEFT JOIN`은 오른쪽 테이블에 매칭되는 데이터가 없어도
+왼쪽 테이블의 행을 유지한다.
+
+따라서 주문이 없는 사용자도 결과에는 한 행이 남는다.
+
+```text
+user_id   order_id
+1         101
+1         102
+2         NULL
+```
+
+이때 `COUNT(*)`를 사용하면 결과 행 자체를 세기 때문에
+주문이 없는 사용자도 1로 계산될 수 있다.
+
+반면 `COUNT(o.order_id)`는 `NULL`을 제외하고 세므로
+주문이 없는 사용자는 0으로 계산된다.
+
+```text
+COUNT(*)          → 행의 개수를 계산
+COUNT(column)     → 해당 컬럼이 NULL이 아닌 행의 개수를 계산
+```
+
+따라서 `LEFT JOIN` 후 오른쪽 테이블의 실제 매칭 건수를 세고 싶다면
+오른쪽 테이블의 컬럼을 `COUNT()`하는 것이 적절하다.
+
+---
+
 ## 5. RIGHT JOIN
 
 `RIGHT JOIN`은 오른쪽 테이블의 데이터는 모두 유지하고, 왼쪽 테이블에서 조건이 일치하는 데이터만 연결한다.
@@ -286,6 +329,7 @@ JOIN 결과:
 * `JOIN`은 여러 테이블을 연결하여 조회할 때 사용한다.
 * `INNER JOIN`은 양쪽에 모두 존재하는 데이터만 조회한다.
 * `LEFT JOIN`은 왼쪽 테이블을 기준으로 데이터를 유지한다.
+* `LEFT JOIN` 후 매칭된 데이터 수를 셀 때는 `COUNT(*)`와 `COUNT(오른쪽테이블.컬럼)`의 차이에 주의해야 한다.
 * `RIGHT JOIN`은 오른쪽 테이블을 기준으로 데이터를 유지한다.
 * `FULL OUTER JOIN`은 양쪽 테이블의 모든 데이터를 조회한다.
 * `CROSS JOIN`은 모든 조합을 만든다.
