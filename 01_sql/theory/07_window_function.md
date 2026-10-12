@@ -374,6 +374,92 @@ FROM monthly_sales;
 
 ---
 
+### 15.5. 시간 간격으로 세션 구간 나누기
+
+`LAG()`와 누적 집계 윈도우 함수를 이용하면
+이전 이벤트와의 시간 차이를 기준으로 새로운 그룹을 만들 수 있다.
+
+예를 들어 이전 이벤트와 10분 이상 차이가 나면
+새로운 세션이 시작된다고 가정한다.
+
+```sql
+WITH preprocessed AS (
+    SELECT user_id,
+           event_time,
+           TIMESTAMPDIFF(
+               SECOND,
+               LAG(event_time) OVER (
+                   ORDER BY event_time
+               ),
+               event_time
+           ) AS time_diff,
+           ROW_NUMBER() OVER (
+               ORDER BY event_time
+           ) AS id
+    FROM events
+)
+
+SELECT user_id,
+       event_time,
+       DENSE_RANK() OVER (
+           ORDER BY session_start_id
+       ) AS session_id
+FROM (
+    SELECT user_id,
+           event_time,
+           MAX(
+               CASE
+                   WHEN time_diff >= 600 THEN id
+                   WHEN time_diff IS NULL THEN id
+               END
+           ) OVER (
+               ORDER BY event_time
+           ) AS session_start_id
+    FROM preprocessed
+) AS t
+ORDER BY event_time;
+```
+
+`LAG()`로 이전 이벤트 시간을 가져온 뒤,
+현재 이벤트와의 시간 차이를 계산한다.
+
+10분은 600초이므로 `time_diff >= 600`인 행을
+새로운 세션의 시작점으로 판단한다.
+
+```sql
+CASE
+    WHEN time_diff >= 600 THEN id
+    WHEN time_diff IS NULL THEN id
+END
+```
+
+첫 번째 이벤트는 이전 이벤트가 없어 `NULL`이므로
+첫 번째 세션의 시작점으로 처리한다.
+
+이후 `MAX() OVER (ORDER BY ...)`를 사용하면
+가장 최근에 등장한 세션 시작 ID가 다음 세션이 시작될 때까지 유지된다.
+
+예를 들어 다음과 같이 변환된다.
+
+```text
+id   시작 ID   누적 MAX
+1       1          1
+2      NULL        1
+3      NULL        1
+4       4          4
+5      NULL        4
+6       6          6
+```
+
+따라서 같은 세션의 이벤트들이 동일한 값을 가지게 되고,
+마지막으로 `DENSE_RANK()`를 적용하면 세션 ID를
+`1, 2, 3, ...`과 같이 연속된 번호로 다시 부여할 수 있다.
+
+이 방식은 사용자 행동 로그처럼
+**시간 간격을 기준으로 연속된 이벤트를 그룹화하는 경우**에 활용할 수 있다.
+
+---
+
 ## 16. 정리
 
 * 윈도우 함수는 원본 행을 유지하면서 순위, 집계, 이전/다음 값을 계산한다.
@@ -385,4 +471,5 @@ FROM monthly_sales;
 * `ROW_NUMBER`, `RANK`, `DENSE_RANK`는 순위 계산에 사용한다.
 * `SUM() OVER`, `AVG() OVER` 등은 행을 유지한 채 집계값을 추가할 때 사용한다.
 * `LAG`, `LEAD`는 이전 행과 다음 행의 값을 가져올 때 사용한다.
+* `LAG()`와 누적 집계 함수를 활용하면 시간 간격을 기준으로 연속된 이벤트를 세션으로 나눌 수 있다.
 * 윈도우 함수는 순위 분석, 누적 합계, 이동 평균, 전월 대비 변화량 계산 등에 자주 사용된다.
