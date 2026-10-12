@@ -54,6 +54,61 @@ FROM customers;
 
 ---
 
+### 3.1. UNION ALL로 양방향 관계 만들기
+
+한 행에 두 대상의 관계가 저장되어 있지만
+관계를 양방향으로 조회해야 하는 경우 `UNION ALL`을 활용할 수 있다.
+
+예를 들어 친구 관계가 다음처럼 저장되어 있다고 하자.
+
+```text
+user_a_id   user_b_id
+1           2
+1           3
+```
+
+친구 관계는 실제로 다음과 같이 양방향이다.
+
+```text
+1 → 2
+2 → 1
+
+1 → 3
+3 → 1
+```
+
+따라서 기존 관계와 반대 방향의 관계를 함께 합칠 수 있다.
+
+```sql
+SELECT user_a_id,
+       user_b_id
+FROM edges
+
+UNION ALL
+
+SELECT user_b_id AS user_a_id,
+       user_a_id AS user_b_id
+FROM edges;
+```
+
+결과:
+
+```text
+user_a_id   user_b_id
+1           2
+1           3
+2           1
+3           1
+```
+
+이렇게 만들면 각 사용자를 `user_a_id` 기준으로 그룹화하여
+친구 수 등을 쉽게 계산할 수 있다.
+
+중복 제거가 필요하지 않은 경우에는 `UNION`보다
+`UNION ALL`을 사용하는 것이 더 적절하다.
+
+---
+
 ## 4. UNION과 UNION ALL 비교
 
 | 구분    | UNION         | UNION ALL       |
