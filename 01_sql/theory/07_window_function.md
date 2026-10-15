@@ -150,6 +150,77 @@ FROM orders;
 
 위 쿼리는 사용자별로 주문일 순서에 따라 누적 주문 금액을 계산한다.
 
+`ORDER BY`가 있는 집계 윈도우 함수는 정렬 순서에 따라
+첫 행부터 현재 행까지의 값을 누적해서 계산할 수 있다.
+
+예를 들어 다음 쿼리는 연도별 값을 누적해서 더한다.
+
+```sql
+SELECT acquisition_year,
+       cnt,
+       SUM(cnt) OVER (
+           ORDER BY acquisition_year
+       ) AS cumulative_cnt
+FROM stats;
+```
+
+결과가 다음과 같다고 하면,
+
+```text
+year    cnt    cumulative_cnt
+1929     9           9
+1930     8          17
+1931     3          20
+1932    18          38
+```
+
+각 행에서 첫 번째 행부터 현재 행까지의 `cnt`가 누적된다.
+
+MySQL에서 `ORDER BY`가 있는 집계 윈도우 함수에
+별도의 Window Frame을 지정하지 않으면 기본적으로 다음 범위를 사용한다.
+
+```sql
+RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+```
+
+- `UNBOUNDED PRECEDING`: 첫 번째 행부터
+- `CURRENT ROW`: 현재 행까지
+
+행 단위로 누적 범위를 명확하게 지정하고 싶다면
+다음과 같이 `ROWS`를 직접 작성할 수 있다.
+
+```sql
+SUM(cnt) OVER (
+    ORDER BY acquisition_year
+    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+)
+```
+
+`RANGE`와 `ROWS`는 정렬 기준에 같은 값이 여러 개 있을 때
+계산 결과가 달라질 수 있다.
+
+현재처럼 `acquisition_year`가 한 행에 하나씩만 존재하는 경우에는
+둘을 같은 누적 합계 방식으로 이해해도 된다.
+
+또한 `OVER` 안의 `ORDER BY`와
+SELECT 문의 마지막 `ORDER BY`는 역할이 다르다.
+
+```sql
+SUM(cnt) OVER (
+    ORDER BY acquisition_year
+)
+```
+
+위의 `ORDER BY`는 윈도우 함수의 **계산 순서**를 지정한다.
+
+반면 다음과 같이 SELECT 문의 마지막에 작성하는 `ORDER BY`는
+
+```sql
+ORDER BY acquisition_year;
+```
+
+최종 결과의 **출력 순서**를 지정한다.
+
 ---
 
 ## 10. LAG
