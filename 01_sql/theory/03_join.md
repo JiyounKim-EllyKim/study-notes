@@ -211,6 +211,84 @@ ON e.manager_id = m.employee_id;
 
 ---
 
+### 8.1. SELF JOIN으로 여러 관계 확인하기
+
+같은 테이블을 여러 번 `JOIN`하면
+하나의 테이블 안에 저장된 여러 관계를 동시에 확인할 수 있다.
+
+예를 들어 `edges` 테이블에 사용자 간 친구 관계가 다음과 같이 저장되어 있다고 하자.
+
+```text
+user_a_id   user_b_id
+A           B
+B           C
+A           C
+```
+
+세 명의 사용자가 서로 모두 친구인지 확인하려면
+다음 세 관계가 모두 존재해야 한다.
+
+```text
+A - B
+B - C
+A - C
+```
+
+이를 확인하기 위해 같은 `edges` 테이블을 여러 번 `JOIN`할 수 있다.
+
+```sql
+SELECT t1.user_a_id AS user_a_id,
+       t1.user_b_id AS user_b_id,
+       t2.user_b_id AS user_c_id
+FROM edges AS t1
+INNER JOIN edges AS t2
+    ON t1.user_b_id = t2.user_a_id
+INNER JOIN edges AS t3
+    ON t1.user_a_id = t3.user_a_id
+   AND t2.user_b_id = t3.user_b_id;
+```
+
+각 테이블의 역할은 다음과 같다.
+
+```text
+t1 : A - B
+t2 :     B - C
+t3 : A ----- C
+```
+
+`t1`과 `t2`만 연결하면 `A-B`, `B-C` 관계만 확인할 수 있다.
+
+```sql
+t1.user_b_id = t2.user_a_id
+```
+
+따라서 A와 C가 실제로 친구인지 확인하기 위해
+같은 테이블을 한 번 더 `JOIN`한다.
+
+```sql
+t1.user_a_id = t3.user_a_id
+AND t2.user_b_id = t3.user_b_id
+```
+
+이 조건까지 만족하면 `A-B`, `B-C`, `A-C` 관계가 모두 존재하므로
+세 사용자가 서로 모두 연결된 관계임을 확인할 수 있다.
+
+---
+
+같은 조합이 순서만 달라 여러 번 나타날 수 있다면
+ID의 순서를 제한하여 중복을 줄일 수 있다.
+
+```sql
+WHERE user_a_id < user_b_id
+  AND user_b_id < user_c_id
+```
+
+예를 들어 `(1, 2, 3)`, `(2, 1, 3)`, `(3, 2, 1)`처럼
+같은 세 사용자가 여러 순서로 표현될 수 있을 때,
+오름차순 조합 하나만 남길 수 있다.
+
+---
+
 ## 9. 테이블 별칭 Alias
 
 JOIN을 사용할 때는 테이블명이 길어질 수 있으므로 별칭을 자주 사용한다.
@@ -334,5 +412,6 @@ JOIN 결과:
 * `FULL OUTER JOIN`은 양쪽 테이블의 모든 데이터를 조회한다.
 * `CROSS JOIN`은 모든 조합을 만든다.
 * `SELF JOIN`은 같은 테이블을 자기 자신과 연결한다.
+* 같은 테이블을 여러 번 `SELF JOIN`하면 여러 단계의 관계를 동시에 확인할 수 있다.
 * `ON`은 테이블 연결 조건, `WHERE`는 결과 필터링 조건이다.
 * JOIN 결과는 관계에 따라 행 수가 늘어날 수 있다.
