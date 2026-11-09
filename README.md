@@ -10,6 +10,7 @@
 - 03_dl: 딥러닝
 - 04_nlp: NLP
 - 05_llm: LLM
+- 06_certifications: 자격증 공부
 
 ## 🎯 Goal
 - 데이터 사이언스 역량 정리 및 프로젝트 대비
